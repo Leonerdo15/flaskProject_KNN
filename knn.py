@@ -3,7 +3,6 @@ import pandas as pd
 
 
 def get_notas():
-    # print(pd.read_csv("http://localhost:5000/spotsEvaluations.csv"))
     return pd.read_csv("http://localhost:5000/spotsEvaluations.csv")
 
 
@@ -13,7 +12,7 @@ def distancia_vetores(a, b):
 
 def notas_do_usuario(usuario):
     salvar_notas_do_usuario = get_notas().query(f"usuarioId == {usuario}")
-    salvar_notas_do_usuario = salvar_notas_do_usuario[["filmeId", "nota"]].set_index("filmeId")
+    salvar_notas_do_usuario = salvar_notas_do_usuario[["sp_id", "nota"]].set_index("sp_id")
     return salvar_notas_do_usuario
 
 
@@ -53,17 +52,20 @@ def sugere_para(voce, k_mais_proximos=10, n=None):
     similares = knn(voce, k_mais_proximos=k_mais_proximos, n=n)
     usuarios_similares = similares.index
     notas_dos_similares = get_notas().set_index("usuarioId").loc[usuarios_similares]
-    recomendacoes = notas_dos_similares.groupby("filmeId").mean()[["nota"]]
-    aparicoes = notas_dos_similares.groupby("filmeId").count()[['nota']]
+    recomendacoes = notas_dos_similares.groupby("sp_id").mean()[["nota"]]
+    aparicoes = notas_dos_similares.groupby("sp_id").count()[['nota']]
 
     recomendacoes = recomendacoes.join(aparicoes, lsuffix="_media_dos_usuarios", rsuffix="_aparicoes_nos_usuarios")
     recomendacoes = recomendacoes.sort_values("nota_media_dos_usuarios", ascending=False)
     recomendacoes = recomendacoes.drop(filmes_que_voce_ja_viu, errors='ignore')
 
     filmes = pd.read_csv("http://localhost:5000/spots.csv")
-    filmes.columns = ["filmeId", "titulo", "generos"]
-    filmes = filmes.set_index("filmeId")
-    return recomendacoes.join(filmes)
+    filmes.columns = ["sp_id", "sp_name", "sp_type"]
+    filmes = filmes.set_index("sp_id")
+    recomendacoes = recomendacoes.join(filmes)
+    recomendacoes = recomendacoes.reset_index()
+    recomendacoes = recomendacoes.to_json()
+    return recomendacoes
 
 
 if __name__ == '__main__':
@@ -73,4 +75,4 @@ if __name__ == '__main__':
     # print(notas_do_usuario(1))
     # print("Distancia entre 1 e 2:")
     # print(distancia_de_usuarios(1, 2))
-    print(sugere_para(2).to_string())
+    print(sugere_para(2))

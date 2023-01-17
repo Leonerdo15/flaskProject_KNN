@@ -50,12 +50,12 @@ def get_evaluation_data():
     cursor = conection.cursor()
     cursor.execute("select se_us_id, se_sp_id, se_rate from spot_evaluations")
     spots_evaluations = cursor.fetchall()
-    return [{"usuarioId": se[0], "filmeId": se[1], "nota": se[2]} for se in spots_evaluations]
+    return [{"usuarioId": se[0], "sp_id": se[1], "nota": se[2]} for se in spots_evaluations]
 
 
 @app.route('/spotsEvaluations.csv', methods=['GET'])
 def get_spots_evaluations():
-    csv_data = generate_csv(get_evaluation_data(), "usuarioId,filmeId,nota\n")
+    csv_data = generate_csv(get_evaluation_data(), "usuarioId,sp_id,nota\n")
     response = make_response(csv_data)
     response.headers["Content-Disposition"] = "attachment; filename=spots_evaluations.csv"
     response.headers["Content-type"] = "text/csv"
